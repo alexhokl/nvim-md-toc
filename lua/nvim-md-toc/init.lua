@@ -9,6 +9,7 @@ local default_options = {
   keymap = "<leader>rm",
   temporary_register = "v",
   themeatic_break = "____",
+  level = 3,
 }
 
 local delete_all_lines_above = function(row)
@@ -16,12 +17,12 @@ local delete_all_lines_above = function(row)
   vim.api.nvim_buf_set_lines(bufnr, 0, row, true, {})
 end
 
-local refreshToc = function(opts)
-  local headers = tree.get_headers()
+local refresh_toc_with_config = function(level, themeatic_break, temporary_register)
+  local headers = tree.get_headers(level)
   local toc_lines = toc.create_toc_from_headers(headers)
 
   -- register the current cursor position to register "v"
-  cursor.store_cursor_position(opts.temporary_register)
+  cursor.store_cursor_position(temporary_register)
 
   if tree.has_thematic_break() then
     local row = tree.first_thematic_break_location()
@@ -29,14 +30,21 @@ local refreshToc = function(opts)
     delete_all_lines_above(row + 1)
   else
     -- add themeatic break to before the first line
-    vim.api.nvim_buf_set_lines(0, 0, 0, false, { opts.themeatic_break })
+    vim.api.nvim_buf_set_lines(0, 0, 0, false, { themeatic_break })
   end
 
   -- add the table of contents
-  table.insert(toc_lines, opts.themeatic_break)
+  table.insert(toc_lines, themeatic_break)
   vim.api.nvim_buf_set_lines(0, 0, 0, false, toc_lines)
 
-  cursor.restore_cursor_position(opts.temporary_register)
+  cursor.restore_cursor_position(temporary_register)
+end
+
+M.refresh_toc = function(level)
+  refresh_toc_with_config(
+    level or M.options.level,
+    M.options.themeatic_break,
+    M.options.temporary_register)
 end
 
 M.setup = function(options)
@@ -45,7 +53,13 @@ M.setup = function(options)
   end
 
   M.options = vim.tbl_deep_extend("force", default_options, options or {})
-  map("n", M.options.keymap, function() refreshToc(M.options) end, "Refresh table of contents")
+  local call = function()
+    refresh_toc_with_config(
+      M.options.level,
+      M.options.themeatic_break,
+      M.options.temporary_register)
+  end
+  map("n", M.options.keymap, call, "Refresh table of contents")
 end
 
 return M

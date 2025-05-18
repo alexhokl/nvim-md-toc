@@ -19,7 +19,7 @@ local get_level_and_text_from_header = function(header_node)
   return level, text
 end
 
-M.get_headers = function()
+M.get_headers = function(level)
   local headers = {}
 
   -- root node of the current buffer
@@ -27,9 +27,11 @@ M.get_headers = function()
   local query_header = vim.treesitter.query.parse('markdown', header_query)
 
   for _, header_node, _ in query_header:iter_captures(root_node, 0) do
-    local level, text = get_level_and_text_from_header(header_node)
-    -- append to headers
-    headers[#headers + 1] = { level = level, text = text }
+    local item_level, text = get_level_and_text_from_header(header_node)
+    if (item_level <= level) then
+      -- append to headers
+      headers[#headers + 1] = { level = item_level, text = text }
+    end
   end
 
   return headers
