@@ -123,6 +123,17 @@ describe("toc.create_toc_from_headers()", function()
     end)
   end)
 
+  describe("headings differing only in case", function()
+    it("second one gets '-1' suffix since anchors are lowercased", function()
+      local lines = toc.create_toc_from_headers(headers({
+        { 3, "How old" },
+        { 3, "how old" },
+      }))
+      assert.are.equal("    + [How old](#how-old)", lines[1])
+      assert.are.equal("    + [how old](#how-old-1)", lines[2])
+    end)
+  end)
+
   describe("unique headings never get a suffix", function()
     it("two different headings have no numeric suffix", function()
       local lines = toc.create_toc_from_headers(headers({

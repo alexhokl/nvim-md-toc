@@ -21,19 +21,16 @@ local create_link = function(header_text, count)
 end
 
 M.create_toc_from_headers = function(headers)
-  local header_text_count = {}
+  -- count by link slug (not raw text) since anchors are lowercased and
+  -- stripped, so "How old" and "how old" collide
+  local slug_count = {}
   local lines = {}
   for _, header in pairs(headers) do
-    if header_text_count[header.text] == nil then
-      header_text_count[header.text] = 1
-      table.insert(lines,
-        default_bullet_markers[header.level] .. " " .. create_link(header.text, 0))
-    else
-      table.insert(lines,
-        default_bullet_markers[header.level] ..
-        " " .. create_link(header.text, header_text_count[header.text]))
-      header_text_count[header.text] = header_text_count[header.text] + 1
-    end
+    local slug = url.get_link_text(header.text)
+    local count = slug_count[slug] or 0
+    slug_count[slug] = count + 1
+    table.insert(lines,
+      default_bullet_markers[header.level] .. " " .. create_link(header.text, count))
   end
   return lines
 end
